@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Catálogo de Productos</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        input, button { margin: 5px; padding: 8px; }
+        li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Agregar Producto</h2>
+    <input type="text" id="nombre" placeholder="Nombre">
+    <input type="number" id="precio" placeholder="Precio">
+    <button onclick="crearProducto()">Guardar</button>
+
+    <h2>Buscar por ID</h2>
+    <input type="number" id="buscar-id" placeholder="ID del producto">
+    <button onclick="buscarProducto()">Buscar</button>
+    <div id="resultado-busqueda"></div>
+
+    <h2>Lista de Productos</h2>
+    <ul id="lista-productos"></ul>
+
+    <script>
+        const url = '/api/productos';
+
+        async function cargarProductos() {
+            const respuesta = await fetch(url);
+            const productos = await respuesta.json();
+            const lista = document.getElementById('lista-productos');
+            lista.innerHTML = '';
+            productos.forEach(p => {
+                lista.innerHTML += `<li><strong>ID: ${p.id}</strong> | ${p.nombre} - $${p.precio} 
+                    <button onclick="eliminarProducto(${p.id})">Eliminar</button></li>`;
+            });
+        }
+
+        async function crearProducto() {
+            const nombre = document.getElementById('nombre').value;
+            const precio = document.getElementById('precio').value;
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, precio })
+            });
+            document.getElementById('nombre').value = '';
+            document.getElementById('precio').value = '';
+            cargarProductos();
+        }
+
+        async function eliminarProducto(id) {
+            await fetch(`${url}/${id}`, { method: 'DELETE' });
+            cargarProductos();
+        }
+
+        async function buscarProducto() {
+            const id = document.getElementById('buscar-id').value;
+            const resultadoDiv = document.getElementById('resultado-busqueda');
+            
+            if (!id) return;
+            
+            const respuesta = await fetch(`${url}/${id}`);
+            if (respuesta.ok) {
+                const producto = await respuesta.json();
+                resultadoDiv.innerHTML = `<p>El producto es: ${producto.nombre} - $${producto.precio}</p>`;
+            } else {
+                resultadoDiv.innerHTML = `<p style="color: red;">ID no asignada</p>`;
+            }
+        }
+
+        cargarProductos();
+    </script>
+</body>
+</html>
